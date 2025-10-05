@@ -1,25 +1,73 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+// App.tsx
+import React, { Suspense, lazy } from "react";
+import { Provider } from "react-redux";
+import { store } from "./store/store";
+import { CartProvider } from "./context/CartContext";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import Profile from "./components/Profile";
+import ProductsList from "./pages/ProductsList";
+
+const Home = lazy(() => import("./pages/Home"));
+const ProductDetails = lazy(() => import("./components/ProductDetails"));
+const AddToCart = lazy(() => import("./components/AddToCart"));
+const Login = lazy(() => import("./components/Login"));
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Provider store={store}>
+      <AuthProvider>
+        <CartProvider>
+          <Router>
+            <Suspense
+              fallback={<div className="text-center p-4">Loading...</div>}
+            >
+              <Routes>
+                <Route
+                  path="/home"
+                  element={
+                    <ProtectedRoute role="Admin">
+                      <Home />
+                    </ProtectedRoute>
+                  }
+                />
+
+                 <Route
+                  path="/contact"
+                  element={
+                    <ProtectedRoute role="Admin">
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route path="/product/:id" element={<ProductDetails />} />
+
+                <Route
+                  path="/cart"
+                  element={
+                    <ProtectedRoute>
+                      <AddToCart />
+                    </ProtectedRoute>
+                  }
+                />
+                 <Route
+                  path="/products"
+                  element={
+                    <ProtectedRoute>
+                      <ProductsList />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route path="/login" element={<Login />} />
+              </Routes>
+            </Suspense>
+          </Router>
+        </CartProvider>
+      </AuthProvider>
+    </Provider>
   );
 }
 
