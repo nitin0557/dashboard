@@ -11,8 +11,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = React.memo(
   ({ children, role }) => {
     const { user, login, logout } = useAuth();
 
-    if (!user) return <Navigate to="/login" replace />;
-    if (role && user.role !== role) return <Navigate to="/login" replace />;
+    if (!user) return <Navigate to="/" replace />;
+    if (role && user.role !== role) return <Navigate to="/" replace />;
 
     return <>{children}</>;
   }

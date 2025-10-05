@@ -20,7 +20,7 @@ const Header = () => {
 
   const handleLogout = useCallback(() => {
     logout();
-    navigate("/login");
+    navigate("/");
   }, [logout, navigate]);
 
   useEffect(() => {

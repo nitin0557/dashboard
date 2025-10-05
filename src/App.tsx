@@ -61,7 +61,7 @@ function App() {
                   }
                 />
 
-                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<Login />} />
               </Routes>
             </Suspense>
           </Router>
