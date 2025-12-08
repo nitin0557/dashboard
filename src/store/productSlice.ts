@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { Products } from "../types/types";
 
 export const fetchProducts = createAsyncThunk("products/fetch", async () => {
-  const res = await fetch("https://fakestoreapi.com/products");
+  const res = await fetch("https://dummytest.com/products");
   return (await res.json()) as Products[];
 });
 

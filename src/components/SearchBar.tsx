@@ -21,7 +21,7 @@ const SearchBar: React.FC = () => {
   const suggestions = useMemo(
     () =>
       products.filter((p) =>
-        p.title.toLowerCase().includes(search.toLowerCase())
+        p.name.toLowerCase().includes(search.toLowerCase())
       ),
     [products, search]
   );
@@ -71,10 +71,10 @@ const SearchBar: React.FC = () => {
           {suggestions.slice(0, 5).map((s) => (
             <li
               key={s.id}
-              onClick={() => handleSelect(s.title)}
+              onClick={() => handleSelect(s.name)}
               className="px-4 py-2 cursor-pointer hover:bg-gray-100"
             >
-              {s.title}
+              {s.name}
             </li>
           ))}
         </ul>

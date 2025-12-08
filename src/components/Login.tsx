@@ -2,7 +2,6 @@ import React, { useState, useContext, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
-
 export default function Login() {
   const { login } = useAuth();
   const [username, setUserName] = useState("");
@@ -43,7 +42,6 @@ export default function Login() {
           <p>
             <strong>Admin:</strong> admin / <strong>123456</strong>
           </p>
-         
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

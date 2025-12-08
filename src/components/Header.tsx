@@ -1,22 +1,17 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useCart } from "../context/CartContext";
 import SearchBar from "./SearchBar";
 import { useAuth } from "../hooks/useAuth";
+import { useView } from "../context/ViewContext";
 
-const Header = () => {
+const Header = ({ onAddProduct }: { onAddProduct?: () => void }) => {
   const [open, setOpen] = useState(false);
-  const { cart } = useCart();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-
-  const totalItems = useMemo(
-    () => cart.reduce((sum, item) => sum + item.quantity, 0),
-    [cart]
-  );
+  const { viewMode, toggleView } = useView();
 
   const handleLogout = useCallback(() => {
     logout();
@@ -51,9 +46,7 @@ const Header = () => {
             <Link to="/home" className="text-gray-700 hover:text-blue-600">
               Home
             </Link>
-            <Link to="/products" className="text-gray-700 hover:text-blue-600">
-              Products
-            </Link>
+
             <Link to="/contact" className="text-gray-700 hover:text-blue-600">
               Contact
             </Link>
@@ -61,17 +54,21 @@ const Header = () => {
           </nav>
 
           <div className="hidden md:flex items-center space-x-4 ml-auto">
-            <Link
-              to="/cart"
-              className="relative bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition"
+            <button
+              onClick={toggleView}
+              className="bg-gray-200 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-300 transition"
             >
-              🛒 Cart
-              {totalItems > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-                  {totalItems}
-                </span>
-              )}
-            </Link>
+              {viewMode === "grid" ? "📄 List View" : "🔲 Grid View"}
+            </button>
+
+            {onAddProduct && (
+              <button
+                onClick={onAddProduct}
+                className="bg-green-500 text-white px-3 py-2 rounded-md hover:bg-green-600 transition"
+              >
+                + Add Product
+              </button>
+            )}
 
             {!user ? (
               <Link
@@ -94,18 +91,6 @@ const Header = () => {
           </div>
 
           <div className="flex justify-end items-center">
-            <Link
-              to="/cart"
-              className="md:hidden relative text-gray-700 px-3 py-2 rounded-md hover:bg-green-600"
-            >
-              🛒
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
-                  {totalItems}
-                </span>
-              )}
-            </Link>
-
             {/* Hamburger button */}
             <button
               onClick={toggleMobileNav}

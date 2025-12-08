@@ -1,6 +1,6 @@
 import { Products } from "../types/types";
 
-const API_URL = "https://fakestoreapi.com/products";
+const API_URL = "https://dummytest.com/";
 
 export const productService = {
   async fetchProducts(): Promise<Products[]> {

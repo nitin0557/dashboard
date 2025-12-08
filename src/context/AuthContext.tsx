@@ -28,7 +28,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = React.memo(
         return JSON.parse(saved) as User;
       } catch (e) {
         console.warn("Failed to parse user from localStorage:", e);
-        localStorage.removeItem("user"); // optional: remove invalid data
+        localStorage.removeItem("user"); 
         return null;
       }
     });

@@ -1,22 +1,81 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { ProductCard } from "../components/ProductCard";
 import Header from "../components/Header";
 import { fetchProducts } from "../store/productSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../store/store";
 import Pagination from "../common/Pagination";
+import productData from "../data/products.json";
+import { useView } from "../context/ViewContext";
+import { Products } from "../types/types";
+import { EditProductModal } from "../components/EditProductModal";
+import { useNavigate } from "react-router-dom";
+import { AddProductModal } from "../components/AddProductModal";
+import { Table } from "../common/Table";
 
 const Home = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { items: products, search, status } = useSelector(
-    (state: RootState) => state.products
-  );
-  const loading = status === "loading";
+  const navigate = useNavigate();
+  const { viewMode } = useView();
+  const [showAddModal, setShowAddModal] = useState(false);
+const columns = [
+  { header: "ID", accessor: "id" as keyof Products },
 
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "none">("none");
+  { header: "Name", accessor: "name" as keyof Products, className: "font-medium" },
+
+  {
+    header: "Price",
+    render: (product: Products) => (
+      <span className="font-semibold text-green-600">
+        ₹{product.price}
+      </span>
+    ),
+  },
+
+  { header: "Category", accessor: "category" as keyof Products, className: "capitalize" },
+
+  {
+    header: "Description",
+    render: (product: Products) => (
+      <div className="line-clamp-2 text-gray-600 text-sm max-w-[240px]">
+        {product.description}
+      </div>
+    ),
+  },
+
+  {
+    header: "Actions",
+    render: (product: Products) => (
+      <div className="flex gap-3 justify-center">
+        <button
+          onClick={() => handleEditOpen(product)}
+          className="text-blue-600 hover:underline"
+        >
+          Edit
+        </button>
+
+        <button
+          onClick={() => handleDeleteProduct(product.id)}
+          className="text-red-600 hover:underline"
+        >
+          Delete
+        </button>
+      </div>
+    ),
+  },
+];
+
+
+  const handleAddProduct = (product: Products) => {
+    setProducts((prev) => [product, ...prev]);
+  };
+
+  const search = useSelector((state: RootState) => state.products.search);
+
+  const [products, setProducts] = useState<Products[]>(productData);
+  const [editingProduct, setEditingProduct] = useState<Products | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     if (products.length === 0) {
@@ -24,129 +83,105 @@ const Home = () => {
     }
   }, [dispatch, products.length]);
 
-  const categories = useMemo(
-    () => Array.from(new Set(products.map((p) => p.category))),
-    [products]
-  );
+  const handleEditOpen = (product: Products) => {
+    setEditingProduct(product);
+  };
 
-  const toggleCategory = useCallback((category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    );
-  }, []);
+  const handleSaveProduct = (updated: Products) => {
+    setProducts((prev) => {
+      const exists = prev.find((p) => p.id === updated.id);
+      if (exists) {
+        return prev.map((p) => (p.id === updated.id ? updated : p));
+      } else {
+        return [updated, ...prev]; // add new product
+      }
+    });
+    setEditingProduct(null);
+    navigate("/home");
+  };
+
+  const handleDeleteProduct = (id: number) => {
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+  };
 
   const filteredProducts = useMemo(() => {
     let result = products;
 
-    if (search) {
+    if (search.trim() !== "") {
       result = result.filter((p) =>
-        p.title.toLowerCase().includes(search.toLowerCase())
+        p.name.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    if (selectedCategories.length > 0) {
-      result = result.filter((p) => selectedCategories.includes(p.category));
-    }
-
-    if (sortOrder === "asc") result = [...result].sort((a, b) => a.price - b.price);
-    else if (sortOrder === "desc")
-      result = [...result].sort((a, b) => b.price - a.price);
-
     return result;
-  }, [products, search, selectedCategories, sortOrder]);
+  }, [products, search]);
 
-  const totalPages = useMemo(
-    () => Math.ceil(filteredProducts.length / itemsPerPage),
-    [filteredProducts.length]
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
-  const paginatedProducts = useMemo(
-    () =>
-      filteredProducts.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-      ),
-    [filteredProducts, currentPage]
-  );
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, selectedCategories, sortOrder]);
-
-  // 🧠 memoize page change handler
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-  }, []);
+  useEffect(() => setCurrentPage(1), [search]);
 
   return (
     <div>
-      <Header />
+      <Header onAddProduct={() => setShowAddModal(true)} />
+
       <div className="pt-24 px-4 pb-6 flex flex-col lg:flex-row gap-6">
-        <div className="w-full lg:w-64 mb-4 lg:mb-0">
-          <div className="bg-white p-4 rounded-xl shadow lg:sticky lg:top-24">
-            <h2 className="text-lg font-semibold mb-4">Filters</h2>
-
-            <div className="mb-6">
-              <h3 className="font-medium mb-2">Categories</h3>
-              <div className="flex flex-col space-y-2">
-                {categories.map((category) => (
-                  <label key={category} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={selectedCategories.includes(category)}
-                      onChange={() => toggleCategory(category)}
-                      className="form-checkbox"
-                    />
-                    <span className="capitalize">{category}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-medium mb-2">Sort by Price</h3>
-              <select
-                value={sortOrder}
-                onChange={(e) =>
-                  setSortOrder(e.target.value as "asc" | "desc" | "none")
-                }
-                className="w-full border border-gray-300 rounded px-2 py-1"
-              >
-                <option value="none">None</option>
-                <option value="asc">Low to High</option>
-                <option value="desc">High to Low</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
         <div className="flex-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {loading && (
-              <p className="text-center text-gray-600 col-span-full">
-                Loading....
-              </p>
-            )}
-            {!loading && paginatedProducts.length > 0 ? (
-              paginatedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))
-            ) : (
-              !loading && (
-                <p className="text-center text-gray-500 col-span-full mt-10">
-                  No Products Found
-                </p>
-              )
-            )}
+          <div className="flex justify-end mb-4">
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1); 
+              }}
+              className="border rounded px-3 py-2"
+            >
+              {[5, 8, 10, 20, 50].map((num) => (
+                <option key={num} value={num}>
+                  {num} per page
+                </option>
+              ))}
+            </select>
           </div>
+          {viewMode === "grid" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {paginatedProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onEdit={() => handleEditOpen(product)}
+                  onDelete={handleDeleteProduct}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-xl shadow border">
+              <Table data={paginatedProducts} columns={columns} keyField="id" />
+            </div>
+          )}
 
-          {!loading && totalPages > 1 && (
+          <EditProductModal
+            product={editingProduct}
+            onClose={() => setEditingProduct(null)}
+            onSave={handleSaveProduct}
+          />
+
+          {showAddModal && (
+            <AddProductModal
+              onClose={() => setShowAddModal(false)}
+              onAdd={handleAddProduct}
+            />
+          )}
+
+          {totalPages > 1 && (
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              onPageChange={handlePageChange}
+              onPageChange={setCurrentPage}
             />
           )}
         </div>

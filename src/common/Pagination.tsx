@@ -1,6 +1,5 @@
 import React from "react";
 
-/* __define-ocg__ - Pagination component */
 interface PaginationProps {
   currentPage: number;
   totalPages: number;

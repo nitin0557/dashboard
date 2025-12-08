@@ -2,23 +2,20 @@
 import React, { Suspense, lazy } from "react";
 import { Provider } from "react-redux";
 import { store } from "./store/store";
-import { CartProvider } from "./context/CartContext";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Profile from "./components/Profile";
-import ProductsList from "./pages/ProductsList";
+import { ViewProvider } from "./context/ViewContext";
 
 const Home = lazy(() => import("./pages/Home"));
-const ProductDetails = lazy(() => import("./components/ProductDetails"));
-const AddToCart = lazy(() => import("./components/AddToCart"));
 const Login = lazy(() => import("./components/Login"));
 
 function App() {
   return (
     <Provider store={store}>
       <AuthProvider>
-        <CartProvider>
+        <ViewProvider>
           <Router>
             <Suspense
               fallback={<div className="text-center p-4">Loading...</div>}
@@ -33,7 +30,7 @@ function App() {
                   }
                 />
 
-                 <Route
+                <Route
                   path="/contact"
                   element={
                     <ProtectedRoute role="Admin">
@@ -42,30 +39,12 @@ function App() {
                   }
                 />
 
-                <Route path="/product/:id" element={<ProductDetails />} />
-
-                <Route
-                  path="/cart"
-                  element={
-                    <ProtectedRoute>
-                      <AddToCart />
-                    </ProtectedRoute>
-                  }
-                />
-                 <Route
-                  path="/products"
-                  element={
-                    <ProtectedRoute>
-                      <ProductsList />
-                    </ProtectedRoute>
-                  }
-                />
 
                 <Route path="/" element={<Login />} />
               </Routes>
             </Suspense>
           </Router>
-        </CartProvider>
+        </ViewProvider>
       </AuthProvider>
     </Provider>
   );
